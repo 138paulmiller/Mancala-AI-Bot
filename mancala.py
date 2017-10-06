@@ -3,18 +3,14 @@
 Paul Miller
 Mancala AI Bot
 	Implemented using Alpha-Beta Pruning to find best option. 
-	AI Prioritizes moves that enable multiple moves per turn 
+	usage ./mancala [-d 6] [-p]
+	-d = lookahead depth, if not given defaults to 5  
 '''
 import multiprocessing
 import random
 import sys # used to catch interrupts
 # use these variables for players to prevent error checking on board
-P1 = 0
-P2 = 1
-# multiprocess computaion
-PARALLEL = True
 DEBUG = True
-DEPTH = 6 # AI lookahead depth, set to negative to search entire game
 class Board:
 	def __init__(self, other=None):
 		if other: #make copy
@@ -118,7 +114,7 @@ class AI:
 		score_delta = (board.get_score(self.player) - board.get_score(self.opponent)) 
 		# horde pieces as well		
 		piece_delta = (board.get_pieces(self.player) - board.get_pieces(self.opponent)) 
-		return score_delta*10 + piece_delta # scal score higher!
+		return score_delta*10 - board.get_pieces(self.player) # scale score higher!
 	
 
 	def alphabeta(self, board, alpha, beta, player, depth):
@@ -130,58 +126,55 @@ class AI:
 			value = self.eval_heuristic(board)
 		elif player == self.player:
 			cut = False
-			alpha = -48
-			beta = 48
+			value = -48
 			i = 0
 			while i < 6 and not cut:
 				board_copy = Board(board)
 				if board_copy.check_move(self.player, i):
-					next_player = board_copy.move(self.player, i)
-					if not board_copy.has_move(next_player):
-						next_player = (next_player+1)%2					
+					next_player = board_copy.move(self.player, i)	
 					value = max(value, self.alphabeta(board_copy, alpha, beta, next_player, depth-1))
 					alpha  = max(value, alpha)
-					if alpha > beta:
+					if alpha >= beta:
 						cut = True
+				else:
+					value = -48
+				
 				i+=1
 		else: # opponent
 			cut = False
-			alpha = -48
-			beta = 48
+			value = 48
 			i = 0 
 			# for each opponent move, check if its valid, if so get the value of the next possible move
 			while i < 6 and not cut:
 				board_copy = Board(board)
 				# if i is a valid move
 				if board_copy.check_move(self.opponent, i): 
-					next_player = board_copy.move(self.opponent, i)
-					# if the next player has no move, change to other player
-					if not board_copy.has_move(next_player):
-						next_player = (next_player+1)%2					
+					next_player = board_copy.move(self.opponent, i)				
 					value = min(value, self.alphabeta(board_copy, alpha, beta, next_player, depth-1))
-					alpha  = min(value, alpha)
-					if alpha > beta:
+					beta  = min(value, beta)
+					if alpha >= beta:
 						cut = True
+				else:					
+					value = 48				
 				i+=1
 		return value
 
 
 	def get_move_score(self, move):
-		value = -48
-		alpha = -48
-		beta = 48
+		value = -50
 		board_copy = Board(self.board)
 		if board_copy.check_move(self.player, move): 
 			next_player = board_copy.move(self.player, move)
 			# if the next player has no move, change to other player
 			if not board_copy.has_move(self.player):
 				next_player = (next_player+1)%2
-			if next_player == self.player:
-				value = 48 # prioritze repeat moves
+			#if next_player == self.player:
+			#	value = 48 # prioritze repeat moves
 			# get next max move
-			value = max(value, self.alphabeta(board_copy, alpha, beta, next_player, self.lookahead))
+			value = max(value, self.alphabeta(board_copy, -48, 48, next_player, self.lookahead))		
 		return value
 		
+
 	def move_parallel(self, board):
 		move = 0
 		print 'AI Thinking...'
@@ -225,21 +218,20 @@ class AI:
 				# if the next player has no move, change to other player
 				if not board_copy.has_move(self.player):
 					next_player = (next_player+1)%2
-				if next_player == self.player:
-					move = i # prioritze repeat moves
 				# get next max move
-				value = max(value, self.alphabeta(board_copy, alpha, beta, next_player, lookahead))
+				value = max(value, self.alphabeta(board_copy, alpha, beta, next_player, self.lookahead))
 				if alpha < value:
 					alpha = value
 					move = i
 				if alpha > beta:
 					cut = True
+
 			i+=1
 		print 'Searched ', self.search_count, ' possibilities'
 		return move
 
-	def move(self, board):
-		if PARALLEL:
+	def move(self, board, parallel):
+		if parallel:
 			return self.move_parallel(board)
 		else:
 			return self.move_serial(board)
@@ -268,20 +260,19 @@ def get_user_move(board, player):
 			if move == 'quit':
 				valid = True
 			else:
-				print 'Pick slots (0-5) Integers only!'
-	
-		finally:
-			if not board.check_move(player, move) and move != 'quit':
-				print 'No pieces at ', move+1
-				valid = False		
-
+				print 'Pick slots (1-6) Integers only!'
+				valid = False
 	return move
 
-
 def main():
+	P1 = 0
+	P2 = 1
+	# multiprocess computaion
+	parallel = True
+	lookahead = 6 # AI lookahead depth, set to negative to search entire game	
 	board = Board()
 	# ai Player
-	ai = AI(P2, DEPTH)
+	ai = AI(P2, lookahead)
 	# starting player is random
 	current_player = random.randint(0,1) 
 	next = (current_player+1)%2
@@ -293,34 +284,39 @@ def main():
 		if board.has_move(current_player):
 			# not ai turn, user turn
 			if current_player != ai.player:	
-				move = get_user_move(board, current_player)
-				if move != 'quit':
-					next = board.move(current_player, move)
-					while current_player == next and board.has_move(current_player) and move != 'quit':
+				move = ''
+				next = current_player
+				while current_player == next and board.has_move(current_player) and move != 'quit':
+					move = get_user_move(board, current_player)					
+					if not board.check_move(current_player, move) :
+						print 'No pieces', move	
+					if move != 'quit':
+						next = board.move(current_player, move)					
 						print board
 						print 'Play again!'
 						print '\nP'+str(current_player+1)
-						move = get_user_move(board, current_player)
-						if move != 'quit':
-							next = board.move(current_player, move)
-			else:		
+					
+						
+			else:
 				# AI turn		
-				move = ai.move(board)
+				move = ai.move(board, parallel)
 				# get the move for the ai player
 				print '\tAI picked ', move+1			
 				next = board.move(ai.player, move)
 				# while AI has another move
-				while ai.player == next and board.has_move(ai.player):
+				while ai.player == next and board.has_move(ai.player) and move != 'quit':
 					print board				
 					print '\tAI Playing Again...'
-					move = ai.move(board)
-					print '\tAI picked ', move+1			
-					next = board.move(ai.player, move)	 
+					move = ai.move(board, parallel)
+					if move != 'quit':
+						print '\tAI picked ', move+1			
+						next = board.move(ai.player, move)	 
 			# set player to the next			
 			current_player = next
 		else:
 			print '\n P'+str(current_player+1) + ' has no moves!'
 			current_player = (current_player+1)%2
+	
 	# If game is over and user did not quit
 	if move != 'quit':
 		print ' 		FINAL'
