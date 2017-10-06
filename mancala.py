@@ -101,20 +101,30 @@ class Board:
 	
 
 class AI:
-	def __init__(self, player, lookahead):
+	def __init__(self, player, lookahead, horde=False, repeat=False, relative= False):
 		self.player = player
 		# other player to opponent
 		self.opponent = (player+1)%2
 		self.search_count = 0
 		self.lookahead = lookahead
 		self.board = None
-
-	def eval_heuristic(self, board):	
-		# have AI maximize the difference in score(lean towards player)
-		score_delta = (board.get_score(self.player) - board.get_score(self.opponent)) 
-		# horde pieces as well		
-		piece_delta = (board.get_pieces(self.player) - board.get_pieces(self.opponent)) 
-		return score_delta*10 - board.get_pieces(self.player) # scale score higher!
+		self.horde = horde # evaluate by number of pieces on ai's side 
+		self.repeat = repeat # score moves that allow repeats very high
+		self.relative = relative # judge score by difference between opponent's		
+	
+	def eval_heuristic(self, board):
+		score =  board.get_score(self.player)
+		pieces = 0
+		if self.horde:
+			pieces = board.get_pieces(self.player)
+		if self.relative:
+			# have AI maximize the difference in score(lean towards player)
+			score = (score - board.get_score(self.opponent)) 
+			if self.horde:
+				# horde pieces as well		
+				pieces = (pieces - board.get_pieces(self.opponent)) 
+		
+		return score + pieces # scale score higher!
 	
 
 	def alphabeta(self, board, alpha, beta, player, depth):
@@ -136,9 +146,8 @@ class AI:
 					alpha  = max(value, alpha)
 					if alpha >= beta:
 						cut = True
-				else:
+				else: # penalize no moves
 					value = -48
-				
 				i+=1
 		else: # opponent
 			cut = False
@@ -154,8 +163,8 @@ class AI:
 					beta  = min(value, beta)
 					if alpha >= beta:
 						cut = True
-				else:					
-					value = 48				
+				else: # no moves					
+					value = 48
 				i+=1
 		return value
 
@@ -165,19 +174,22 @@ class AI:
 		board_copy = Board(self.board)
 		if board_copy.check_move(self.player, move): 
 			next_player = board_copy.move(self.player, move)
+							
 			# if the next player has no move, change to other player
 			if not board_copy.has_move(self.player):
 				next_player = (next_player+1)%2
-			#if next_player == self.player:
-			#	value = 48 # prioritze repeat moves
-			# get next max move
-			value = max(value, self.alphabeta(board_copy, -48, 48, next_player, self.lookahead))		
+			
+			# prioritize multiple turns
+			if self.repeat and next_player == self.player:
+				value = 50			
+			value = max(value, self.alphabeta(board_copy, -48, 48, next_player, self.lookahead))
+				
 		return value
 		
 
 	def move_parallel(self, board):
 		move = 0
-		print 'AI Thinking...'
+		#print 'AI Thinking...'
 		try:
 			pool = multiprocessing.Pool(multiprocessing.cpu_count())		
 			move = 0		
@@ -186,8 +198,8 @@ class AI:
 			scores = pool.map_async(unpack_get_move_score, [(self,0), (self,1), (self,2), (self,3), (self,4), (self,5)]).get(60)	
 			scores = list(scores)			
 			# allow keyboard intteruptions 
-			if DEBUG:			
-				print scores		
+		#	if DEBUG:			
+		#		print scores		
 			for i in range(0, 6): # ignore first move, already chosen
 				if scores[move] < scores[i]:
 					move = i
@@ -225,7 +237,6 @@ class AI:
 					move = i
 				if alpha > beta:
 					cut = True
-
 			i+=1
 		print 'Searched ', self.search_count, ' possibilities'
 		return move
@@ -264,6 +275,53 @@ def get_user_move(board, player):
 				valid = False
 	return move
 
+def ai_battle():
+	#tests the different heuristics by having ai play each other
+	P1 = 0
+	P2 = 1
+	# multiprocess computaion
+	parallel = True
+	lookahead = 6 # AI lookahead depth, set to negative to search entire game	
+	board = Board()
+	ai_basic = AI(P1, lookahead, relative=True, repeat=True)
+	#ai_horder = AI(P2, lookahead, horde=True) # hordes pieces on its side
+	ai_relative = AI(P2, lookahead, relative=True) # hordes pieces on its side
+	next = random.randint(0,1) 
+	if next == ai_basic.player:				
+		print 'Relative Repeater Started'
+	else:
+		print 'Relative Started' 
+	ai = None # ai with current turn
+	# AI1 turn
+	while not board.game_over():
+		if not board.has_move(next):
+			next = (next+1)%2
+		if next == ai_basic.player:
+			ai = ai_basic
+		else:
+			ai = ai_relative	
+		move = ai.move(board, parallel)
+
+		#print board
+		## get the move for the ai player
+		#if ai.player == ai_basic.player:				
+		#	print 'Basic picked ', move+1			
+		#else:
+		#	print 'Horder picked ', move+1			
+		next = board.move(ai.player, move)
+	
+	print ' 		FINAL'
+	print board
+	p1_score = board.get_score(P1)
+	p2_score = board.get_score(P2)
+	if p1_score > p2_score:
+		print 'Relative Repeater Wins!'
+	elif p1_score < p2_score:
+		print 'Relative Wins!'
+	else:
+		print 'It\'s a tie !'
+
+
 def main():
 	P1 = 0
 	P2 = 1
@@ -295,8 +353,7 @@ def main():
 						print board
 						print 'Play again!'
 						print '\nP'+str(current_player+1)
-					
-						
+									
 			else:
 				# AI turn		
 				move = ai.move(board, parallel)
@@ -308,9 +365,8 @@ def main():
 					print board				
 					print '\tAI Playing Again...'
 					move = ai.move(board, parallel)
-					if move != 'quit':
-						print '\tAI picked ', move+1			
-						next = board.move(ai.player, move)	 
+					print '\tAI picked ', move+1			
+					next = board.move(ai.player, move)	 
 			# set player to the next			
 			current_player = next
 		else:
@@ -331,5 +387,9 @@ def main():
 			print 'It\'s a tie !'
 	print 'Goodbye!'
 
+
+
+
 if __name__ == '__main__':
-	main()
+	#main()
+	ai_battle()
