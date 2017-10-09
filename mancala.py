@@ -52,8 +52,7 @@ class Board:
 			if pieces == 0 and slot < (player+1)*6 and slot > (player)*6 and self.board[slot] > 1:
 				pieces = self.board[slot]
 				self.board[slot] = 0
-
-			self.move_num += 1
+		self.move_num += 1
 		return next_player
 			
 	def get_score(self, player):
@@ -147,7 +146,7 @@ class AI:
 					if alpha >= beta:
 						cut = True
 				else: # penalize no moves
-					value = -48
+					alpha = -48
 				i+=1
 		else: # opponent
 			cut = False
@@ -164,7 +163,7 @@ class AI:
 					if alpha >= beta:
 						cut = True
 				else: # no moves					
-					value = 48
+					beta = 48
 				i+=1
 		return value
 
@@ -178,12 +177,12 @@ class AI:
 			# if the next player has no move, change to other player
 			if not board_copy.has_move(self.player):
 				next_player = (next_player+1)%2
-			
+						
+			value = max(value, self.alphabeta(board_copy, -48, 48, next_player, self.lookahead))	
+		
 			# prioritize multiple turns
 			if self.repeat and next_player == self.player:
-				value = 50			
-			value = max(value, self.alphabeta(board_copy, -48, 48, next_player, self.lookahead))
-				
+				value = 50		
 		return value
 		
 
@@ -281,28 +280,26 @@ def ai_battle():
 	P2 = 1
 	# multiprocess computaion
 	parallel = True
-	lookahead = 6 # AI lookahead depth, set to negative to search entire game	
+	lookahead = 8 # AI lookahead depth, set to negative to search entire game	
 	board = Board()
-	ai_basic = AI(P1, lookahead, relative=True, repeat=True)
+	ai_rel_repeat = AI(P1, lookahead, relative=True, repeat=True)
 	#ai_horder = AI(P2, lookahead, horde=True) # hordes pieces on its side
-	ai_relative = AI(P2, lookahead, relative=True) # hordes pieces on its side
-	next = random.randint(0,1) 
-	if next == ai_basic.player:				
-		print 'Relative Repeater Started'
-	else:
-		print 'Relative Started' 
+	ai_relative = AI(P2, lookahead, relative=True) # relative score
+	next = random.randint(0,1)
+	
+	starting_ai = next 
 	ai = None # ai with current turn
 	# AI1 turn
 	while not board.game_over():
+		
 		if not board.has_move(next):
 			next = (next+1)%2
-		if next == ai_basic.player:
-			ai = ai_basic
+		if next == ai_rel_repeat.player:
+			ai = ai_rel_repeat	
 		else:
 			ai = ai_relative	
 		move = ai.move(board, parallel)
-
-		#print board
+		print board
 		## get the move for the ai player
 		#if ai.player == ai_basic.player:				
 		#	print 'Basic picked ', move+1			
@@ -314,6 +311,11 @@ def ai_battle():
 	print board
 	p1_score = board.get_score(P1)
 	p2_score = board.get_score(P2)
+
+	if next == ai_rel_repeat:				
+		print  'Relative Repeater Started'
+	else:
+		print  'Relative Started' 
 	if p1_score > p2_score:
 		print 'Relative Repeater Wins!'
 	elif p1_score < p2_score:
