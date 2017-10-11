@@ -100,7 +100,7 @@ class Board:
 	
 
 class AI:
-	def __init__(self, player, lookahead, horde=False, repeat=False, relative= False):
+	def __init__(self, player, lookahead, relative_score= False, horde=False, relative_horde=False):
 		self.player = player
 		# other player to opponent
 		self.opponent = (player+1)%2
@@ -108,21 +108,20 @@ class AI:
 		self.lookahead = lookahead
 		self.board = None
 		self.horde = horde # evaluate by number of pieces on ai's side 
-		self.repeat = repeat # score moves that allow repeats very high
-		self.relative = relative # judge score by difference between opponent's		
+		self.relative_score = relative_score # judge score by difference between opponent's
+		self.relative_horde = relative_horde # judge score by difference between opponent's		
 	
 	def eval_heuristic(self, board):
 		score =  board.get_score(self.player)
 		pieces = 0
 		if self.horde:
-			pieces = board.get_pieces(self.player)
-		if self.relative:
+			if self.relative_horde:
+				pieces = (pieces - board.get_pieces(self.opponent))
+			else:
+				pieces = board.get_pieces(self.player)
+		if self.relative_score:
 			# have AI maximize the difference in score(lean towards player)
 			score = (score - board.get_score(self.opponent)) 
-			if self.horde:
-				# horde pieces as well		
-				pieces = (pieces - board.get_pieces(self.opponent)) 
-		
 		return score + pieces # scale score higher!
 	
 
@@ -171,18 +170,15 @@ class AI:
 	def get_move_score(self, move):
 		value = -50
 		board_copy = Board(self.board)
-		if board_copy.check_move(self.player, move): 
+		next_player = self.player		
+		# repeats are prioritized by increasing score	
+		while next_player == self.player and board_copy.check_move(self.player, move):			
 			next_player = board_copy.move(self.player, move)
-							
 			# if the next player has no move, change to other player
 			if not board_copy.has_move(self.player):
 				next_player = (next_player+1)%2
-						
 			value = max(value, self.alphabeta(board_copy, -48, 48, next_player, self.lookahead))	
-		
-			# prioritize multiple turns
-			if self.repeat and next_player == self.player:
-				value = 50		
+				
 		return value
 		
 
@@ -212,6 +208,7 @@ class AI:
 	
 	# Simple NON-parallel approach
 	def move_serial(self, board):
+
 		alpha = -48
 		beta = 48
 		value = alpha
@@ -280,46 +277,46 @@ def ai_battle():
 	P2 = 1
 	# multiprocess computaion
 	parallel = True
-	lookahead = 8 # AI lookahead depth, set to negative to search entire game	
+	lookahead = 6 # AI lookahead depth, set to negative to search entire game	
 	board = Board()
-	ai_rel_repeat = AI(P1, lookahead, relative=True, repeat=True)
+	ai = AI(P1, lookahead, relative_score= False, horde=False)
 	#ai_horder = AI(P2, lookahead, horde=True) # hordes pieces on its side
-	ai_relative = AI(P2, lookahead, relative=True) # relative score
+	ai_relative = AI(P2, lookahead, relative_score= True, horde=True, relative_horde=True) # relative score
 	next = random.randint(0,1)
 	
 	starting_ai = next 
-	ai = None # ai with current turn
+	ai_cur = None # ai with current turn
 	# AI1 turn
 	while not board.game_over():
 		
 		if not board.has_move(next):
 			next = (next+1)%2
-		if next == ai_rel_repeat.player:
-			ai = ai_rel_repeat	
+		if next == ai.player:
+			ai_cur = ai	
 		else:
-			ai = ai_relative	
-		move = ai.move(board, parallel)
+			ai_cur = ai_relative	
+		move = ai_cur.move(board, parallel)
 		print board
 		## get the move for the ai player
 		#if ai.player == ai_basic.player:				
 		#	print 'Basic picked ', move+1			
 		#else:
 		#	print 'Horder picked ', move+1			
-		next = board.move(ai.player, move)
+		next = board.move(ai_cur.player, move)
 	
 	print ' 		FINAL'
 	print board
 	p1_score = board.get_score(P1)
 	p2_score = board.get_score(P2)
 
-	if next == ai_rel_repeat:				
-		print  'Relative Repeater Started'
+	if next == ai:				
+		print  'P1 Started'
 	else:
-		print  'Relative Started' 
+		print  'P2  Started' 
 	if p1_score > p2_score:
-		print 'Relative Repeater Wins!'
+		print 'P1 Wins!'
 	elif p1_score < p2_score:
-		print 'Relative Wins!'
+		print 'P2 Wins!'
 	else:
 		print 'It\'s a tie !'
 
