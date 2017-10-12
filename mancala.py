@@ -2,15 +2,15 @@
 '''
 Paul Miller
 Mancala AI Bot
-	Implemented using Alpha-Beta Pruning to find best option. 
-	usage ./mancala [-d 6] [-p]
-	-d = lookahead depth, if not given defaults to 5  
+	Implemented using Alpha-Beta Pruning to find best move. 
 '''
 import multiprocessing
 import random
 import sys # used to catch interrupts
+
 # use these variables for players to prevent error checking on board
 DEBUG = True
+
 class Board:
 	def __init__(self, other=None):
 		if other: #make copy
@@ -90,9 +90,7 @@ class Board:
 		# show in reverse for player 1		
 		for p in reversed(self.board[6:14]):
 			layout += str(p) + ' '
-		layout += '|'
-		layout += '                    \n' 
-		layout += '\n       |'
+		layout += '|                    \n\n       |'
 		for p in self.board[0:6]:
 			layout += str(p) + ' '
 		layout += '|\n       |  1 --> 6      P1: ' + str(self.bowl[0]) + '\n--------------------------------'	
@@ -104,12 +102,13 @@ class AI:
 		self.player = player
 		# other player to opponent
 		self.opponent = (player+1)%2
-		self.search_count = 0
+		self.search_count = 0 # is not locked, does not update in parallel move
 		self.lookahead = lookahead
 		self.board = None
 		self.horde = horde # evaluate by number of pieces on ai's side 
 		self.relative_score = relative_score # judge score by difference between opponent's
 		self.relative_horde = relative_horde # judge score by difference between opponent's		
+	
 	
 	def eval_heuristic(self, board):
 		score =  board.get_score(self.player)
@@ -120,9 +119,8 @@ class AI:
 			else:
 				pieces = board.get_pieces(self.player)
 		if self.relative_score:
-			# have AI maximize the difference in score(lean towards player)
 			score = (score - board.get_score(self.opponent)) 
-		return score + pieces # scale score higher!
+		return score + pieces
 	
 
 	def alphabeta(self, board, alpha, beta, player, depth):
@@ -183,6 +181,7 @@ class AI:
 		
 
 	def move_parallel(self, board):
+		
 		move = 0
 		#print 'AI Thinking...'
 		try:
@@ -193,8 +192,6 @@ class AI:
 			scores = pool.map_async(unpack_get_move_score, [(self,0), (self,1), (self,2), (self,3), (self,4), (self,5)]).get(60)	
 			scores = list(scores)			
 			# allow keyboard intteruptions 
-		#	if DEBUG:			
-		#		print scores		
 			for i in range(0, 6): # ignore first move, already chosen
 				if scores[move] < scores[i]:
 					move = i
@@ -208,7 +205,6 @@ class AI:
 	
 	# Simple NON-parallel approach
 	def move_serial(self, board):
-
 		alpha = -48
 		beta = 48
 		value = alpha
@@ -271,22 +267,41 @@ def get_user_move(board, player):
 				valid = False
 	return move
 
+# Performs BFS search to count number of possible states until a given Depth
+def get_state_space(board, player, depth):	
+	count = 0 
+	if not board.game_over() and depth > 0:
+		moves = [] # [(board,player) ,	...]
+		# search siblings			
+		for i in range(0,6):
+			if board.check_move(player, i):		
+				count += 1
+				board_copy = Board(board)
+				next_player = board_copy.move(player, i)
+				moves.append((board_copy, next_player))
+		# search sibling children			
+		for move in moves:
+			count += get_state_space(move[0], move[1], depth-1) 
+	return count
+
+
+
 def ai_battle():
 	#tests the different heuristics by having ai play each other
 	P1 = 0
 	P2 = 1
 	# multiprocess computaion
 	parallel = True
-	lookahead = 6 # AI lookahead depth, set to negative to search entire game	
+	lookahead = 8 # AI lookahead depth, set to negative to search entire game	
 	board = Board()
-	ai = AI(P1, lookahead, relative_score= False, horde=False)
+	ai = AI(P1, lookahead, relative_score= False)
 	#ai_horder = AI(P2, lookahead, horde=True) # hordes pieces on its side
-	ai_relative = AI(P2, lookahead, relative_score= True, horde=True, relative_horde=True) # relative score
+	ai_relative = AI(P2, lookahead, relative_score= True, horde=True, relative_horde=True) #horde relative is better then not
 	next = random.randint(0,1)
 	
 	starting_ai = next 
 	ai_cur = None # ai with current turn
-	# AI1 turn
+	
 	while not board.game_over():
 		
 		if not board.has_move(next):
@@ -387,8 +402,8 @@ def main():
 	print 'Goodbye!'
 
 
-
-
 if __name__ == '__main__':
-	#main()
-	ai_battle()
+	#main()  # user interactive
+	ai_battle() # watch AI's battle it out
+	#board = Board()
+	#print 'State Space Size: ', get_state_space(board, 0, 10)
