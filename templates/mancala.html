@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Mancala</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='mancala.css')}}" />
+    <script type=text/javascript src="{{url_for('static', filename='jquery--3.2.1.min.js') }}"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+
+  </head>
+  <body>
+
+    <script>
+
+       $(document).ready(function() {
+
+
+         var refresh_id = setInterval(function() {
+             $.get(
+               "{{ url_for('getCurrentBoardState') }}",
+               function(data) {
+
+                 document.getElementById('cell0').innerHTML = data.board[0];
+                 document.getElementById('cell1').innerHTML = data.board[1];
+                 document.getElementById('cell2').innerHTML = data.board[2];
+                 document.getElementById('cell3').innerHTML = data.board[3];
+                 document.getElementById('cell4').innerHTML = data.board[4];
+                 document.getElementById('cell5').innerHTML = data.board[5];
+                 document.getElementById('cell6').innerHTML = data.board[6];
+                 document.getElementById('cell7').innerHTML = data.board[7];
+                 document.getElementById('cell8').innerHTML = data.board[8];
+                 document.getElementById('cell9').innerHTML = data.board[9];
+                 document.getElementById('cell10').innerHTML = data.board[10];
+                 document.getElementById('cell11').innerHTML = data.board[11];
+
+                 document.getElementById('bowl0').innerHTML = data.bowls[0];
+                 document.getElementById('bowl1').innerHTML = data.bowls[1];
+
+               }
+             )}
+           , 1000);
+       });
+
+     </script>
+
+    <div class="container">
+
+    <h1>Mancala</h1>
+
+    <body>
+
+      <table>
+        <tr>
+          <tr>
+            <td rowspan="2" id="bowl0">{{ bowls[0] }}</td>
+            <td id="cell0">{{ board[0] }}</td>
+            <td id="cell1">{{ board[1] }}</td>
+            <td id="cell2">{{ board[2] }}</td>
+            <td id="cell3">{{ board[3] }}</td>
+            <td id="cell4">{{ board[4] }}</td>
+            <td id="cell5">{{ board[5] }}</td>
+            <td rowspan="2" id="bowl1">{{ bowls[1] }}</td>
+          </tr>
+        </tr>
+
+        <tr>
+          <td id="cell6">{{ board[6] }}</td>
+          <td id="cell7">{{ board[7] }}</td>
+          <td id="cell8">{{ board[8] }}</td>
+          <td id="cell9">{{ board[9] }}</td>
+          <td id="cell10">{{ board[10] }}</td>
+          <td id="cell11">{{ board[11] }}</td>
+        </tr>
+
+      </table>
+
+    </body>
+
+    <h1 id="winner"></h1>
+
+  </body>
+</html>
