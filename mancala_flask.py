@@ -4,7 +4,6 @@ Paul Miller
 Mancala AI Bot
 	Implemented using Alpha-Beta Pruning to find best move.
 '''
-from threading import Thread # might not need this... currently using it to launch AIBattle
 import multiprocessing
 from multiprocessing import Process
 import random
@@ -293,25 +292,11 @@ def get_state_space(board, player, depth):
 			count += get_state_space(move[0], move[1], depth-1)
 	return count
 
-# this will be the driver code, still need to create smaller methods for gameplay, this is currently just a prototype
-# -----------------------------------------------------------------------------------------------------
-board = Board()
 
-# -----------------------------------------------------------------------------------------------------
-# rest of the driver code is located at the end of this file
+def resetBoard():
+	board = Board()
 
-@app.route('/displayBoard', methods=['POST'])
-def displayBoard():
-	gameThread = Thread(target=launchAIBattle)
-	gameThread.start()
-	return render_template('mancala.html', board=board.getBoard(), bowls=board.getBowls())
-
-@app.route('/getCurrentBoardState')
-def getCurrentBoardState():
-	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls()})
-
-def launchAIBattle():
-	#tests the different heuristics by having ai play each other
+def initalizeAIBattleVariables():
 	P1 = 0
 	P2 = 1
 	# multiprocess computaion
@@ -322,51 +307,77 @@ def launchAIBattle():
 	#ai_horder = AI(P2, lookahead, horde=True) # hordes pieces on its side
 	ai_relative = AI(P2, lookahead, relative_score= True, horde=True, relative_horde=True) #horde relative is better then not
 	next = random.randint(0,1)
-
 	starting_ai = next
 	ai_cur = None # ai with current turn
+	return ai, ai_relative, ai_cur, next, parallel
 
-	while not board.game_over():
+# this will be the driver code, still need to create smaller methods for gameplay, this is currently just a prototype
+# -----------------------------------------------------------------------------------------------------
+board = Board()
+resetBoard()
+playerOne, playerTwo, current, nextMove, parallel = initalizeAIBattleVariables()
+# playerOne = None
+# playerTwo = None
+# current = None
+# nextMove = None
 
-		if not board.has_move(next):
-			next = (next+1)%2
-		if next == ai.player:
-			ai_cur = ai
-		else:
-			ai_cur = ai_relative
-		move = ai_cur.move(board, parallel)
-		# will need to use ajax or something so entire page doesnt need to reload everytime and continue execution
-		#displayBoard(board.getBoard(), board.getBowls())
-		#getCurrentBoardState()
-		#return render_template('mancala.html', board=board.getBoard(), bowls=board.getBowls())
-		print board
-		## get the move for the ai player
-		#if ai.player == ai_basic.player:
-		#	print 'Basic picked ', move+1
-		#else:
-		#	print 'Horder picked ', move+1
-		next = board.move(ai_cur.player, move)
+# while(isGameOver == False):
+	# makeAIBattleMove(playerOne, playerTwo, current, nextMove)
 
+# getWinner()
+
+# -----------------------------------------------------------------------------------------------------
+# rest of the driver code is located at the end of this file
+
+@app.route('/initializeAIBattle', methods=['POST'])
+def initializeAIBattle():
+	resetBoard()
+	playerOne, playerTwo, current, nextMove, parallel = initalizeAIBattleVariables()
+	return render_template('mancala.html', board=board.getBoard(), bowls=board.getBowls())
+
+@app.route('/makeNextMove')
+def makeNextMove():
+	makeAIBattleMove(playerOne, playerTwo, current, nextMove)
+	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls(), 'gameOver': isGameOver(),'winnerString': getWinnerIfGameIsOver()})
+
+# @app.route('/getWinnerString')
+# def getWinnerString():
+# 	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls(), 'winnerString': getWinner()})
+
+# do this while game is not over
+def makeAIBattleMove(ai, ai_relative, ai_cur, next):
+	if not board.has_move(next):
+		next = (next+1)%2
+	if next == ai.player:
+		ai_cur = ai
+	else:
+		ai_cur = ai_relative
+	move = ai_cur.move(board, parallel)
+	print board
+	next = board.move(ai_cur.player, move)
+	return isGameOver
+
+def isGameOver():
+	return board.game_over()
+
+def getWinner():
 	print ' 		FINAL'
 	print board
-	p1_score = board.get_score(P1)
-	p2_score = board.get_score(P2)
+	p1_score = board.get_score(0)
+	p2_score = board.get_score(1)
+	winnerString = ''
 
-	if next == ai:
-		print  'P1 Started'
-	else:
-		print  'P2  Started'
 	if p1_score > p2_score:
-		winner = "Player One Wins!"
-		print 'P1 Wins!'
+		winnerString = "Player One Wins!"
 	elif p1_score < p2_score:
-		winner = "Player TWO Wins!"
-		print 'P2 Wins!'
+		winnerString = "Player TWO Wins!"
 	else:
-		winner = "It\'s a tie!"
-		print 'It\'s a tie !'
+		winnerString = "It\'s a tie!"
+	return winnerString
 
-
+def getWinnerIfGameIsOver():
+	if isGameOver == True:
+		return getWinner()
 
 def main():
 	P1 = 0

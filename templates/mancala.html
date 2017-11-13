@@ -13,35 +13,49 @@
 
     <script>
 
+    function makeNextMove(){
+      $.get(
+        "{{ url_for('makeNextMove') }}",
+        function(data) {
+
+          document.getElementById('cell0').innerHTML = data.board[0];
+          document.getElementById('cell1').innerHTML = data.board[1];
+          document.getElementById('cell2').innerHTML = data.board[2];
+          document.getElementById('cell3').innerHTML = data.board[3];
+          document.getElementById('cell4').innerHTML = data.board[4];
+          document.getElementById('cell5').innerHTML = data.board[5];
+          document.getElementById('cell6').innerHTML = data.board[6];
+          document.getElementById('cell7').innerHTML = data.board[7];
+          document.getElementById('cell8').innerHTML = data.board[8];
+          document.getElementById('cell9').innerHTML = data.board[9];
+          document.getElementById('cell10').innerHTML = data.board[10];
+          document.getElementById('cell11').innerHTML = data.board[11];
+
+          document.getElementById('bowl0').innerHTML = data.bowls[0];
+          document.getElementById('bowl1').innerHTML = data.bowls[1];
+
+          if(data.gameOver == false)
+            makeNextMove();
+          else{
+            document.getElementById('winnerString').innerHTML = data.winnerString;
+          }
+
+        }
+      );
+    }
+
        $(document).ready(function() {
 
+         // $.get(
+         //   "{{ url_for('makeNextMove') }}",
+         //   function(data) {
+         //
+         //   }
+         // );
+          makeNextMove();
 
-         var refresh_id = setInterval(function() {
-             $.get(
-               "{{ url_for('getCurrentBoardState') }}",
-               function(data) {
 
-                 document.getElementById('cell0').innerHTML = data.board[0];
-                 document.getElementById('cell1').innerHTML = data.board[1];
-                 document.getElementById('cell2').innerHTML = data.board[2];
-                 document.getElementById('cell3').innerHTML = data.board[3];
-                 document.getElementById('cell4').innerHTML = data.board[4];
-                 document.getElementById('cell5').innerHTML = data.board[5];
-                 document.getElementById('cell6').innerHTML = data.board[6];
-                 document.getElementById('cell7').innerHTML = data.board[7];
-                 document.getElementById('cell8').innerHTML = data.board[8];
-                 document.getElementById('cell9').innerHTML = data.board[9];
-                 document.getElementById('cell10').innerHTML = data.board[10];
-                 document.getElementById('cell11').innerHTML = data.board[11];
-
-                 document.getElementById('bowl0').innerHTML = data.bowls[0];
-                 document.getElementById('bowl1').innerHTML = data.bowls[1];
-
-               }
-             )}
-           , 1000);
-       });
-
+           });
      </script>
 
     <div class="container">
@@ -54,10 +68,10 @@
         <tr>
           <tr>
             <td rowspan="2" id="bowl0">{{ bowls[0] }}</td>
-            <td id="cell0">{{ board[0] }}</td>
-            <td id="cell1">{{ board[1] }}</td>
-            <td id="cell2">{{ board[2] }}</td>
-            <td id="cell3">{{ board[3] }}</td>
+            <td id="cell0"></td>
+            <td id="cell1"></td>
+            <td id="cell2"></td>
+            <td id="cell3"></td>
             <td id="cell4">{{ board[4] }}</td>
             <td id="cell5">{{ board[5] }}</td>
             <td rowspan="2" id="bowl1">{{ bowls[1] }}</td>
