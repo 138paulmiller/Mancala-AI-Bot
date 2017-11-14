@@ -37,7 +37,7 @@
           if(data.gameOver == false)
             makeNextMove();
           else{
-            document.getElementById('winnerString').innerHTML = data.winnerString;
+            document.getElementById('winnerDisplay').innerHTML = data.winnerString;
           }
 
         }
@@ -68,10 +68,10 @@
         <tr>
           <tr>
             <td rowspan="2" id="bowl0">{{ bowls[0] }}</td>
-            <td id="cell0"></td>
-            <td id="cell1"></td>
-            <td id="cell2"></td>
-            <td id="cell3"></td>
+            <td id="cell0">{{ board[0]}}</td>
+            <td id="cell1">{{ board[1] }}</td>
+            <td id="cell2">{{ board[2] }}</td>
+            <td id="cell3">{{ board[3] }}</td>
             <td id="cell4">{{ board[4] }}</td>
             <td id="cell5">{{ board[5] }}</td>
             <td rowspan="2" id="bowl1">{{ bowls[1] }}</td>
@@ -91,7 +91,7 @@
 
     </body>
 
-    <h1 id="winner"></h1>
+    <h1 id="winnerDisplay"></h1>
 
   </body>
 </html>

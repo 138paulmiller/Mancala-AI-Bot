@@ -338,7 +338,7 @@ def initializeAIBattle():
 @app.route('/makeNextMove')
 def makeNextMove():
 	makeAIBattleMove(playerOne, playerTwo, current, nextMove)
-	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls(), 'gameOver': isGameOver(),'winnerString': getWinnerIfGameIsOver()})
+	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls(), 'gameOver': board.game_over(),'winnerString': getWinnerIfGameIsOver()})
 
 # @app.route('/getWinnerString')
 # def getWinnerString():
@@ -355,9 +355,6 @@ def makeAIBattleMove(ai, ai_relative, ai_cur, next):
 	move = ai_cur.move(board, parallel)
 	print board
 	next = board.move(ai_cur.player, move)
-	return isGameOver
-
-def isGameOver():
 	return board.game_over()
 
 def getWinner():
@@ -376,7 +373,7 @@ def getWinner():
 	return winnerString
 
 def getWinnerIfGameIsOver():
-	if isGameOver == True:
+	if board.game_over() == True:
 		return getWinner()
 
 def main():
