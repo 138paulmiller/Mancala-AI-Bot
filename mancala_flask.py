@@ -294,9 +294,9 @@ def get_state_space(board, player, depth):
 
 
 def resetBoard():
-	board = Board()
+	return Board()
 
-def initalizeAIBattleVariables():
+def initializeAIBattleVariables():
 	P1 = 0
 	P2 = 1
 	# multiprocess computaion
@@ -309,13 +309,13 @@ def initalizeAIBattleVariables():
 	next = random.randint(0,1)
 	starting_ai = next
 	ai_cur = None # ai with current turn
-	return ai, ai_relative, ai_cur, next, parallel
+	newBoard = Board()
+	return ai, ai_relative, ai_cur, next, parallel, newBoard
 
 # this will be the driver code, still need to create smaller methods for gameplay, this is currently just a prototype
 # -----------------------------------------------------------------------------------------------------
-board = Board()
-resetBoard()
-playerOne, playerTwo, current, nextMove, parallel = initalizeAIBattleVariables()
+
+playerOne, playerTwo, current, nextMove, parallel, board = initializeAIBattleVariables()
 # playerOne = None
 # playerTwo = None
 # current = None
@@ -331,12 +331,21 @@ playerOne, playerTwo, current, nextMove, parallel = initalizeAIBattleVariables()
 
 @app.route('/initializeAIBattle', methods=['POST'])
 def initializeAIBattle():
-	resetBoard()
-	playerOne, playerTwo, current, nextMove, parallel = initalizeAIBattleVariables()
+	global playerOne
+	global playerTwo
+	global current
+	global nextMove
+	global parallel
+	global board
+	playerOne, playerTwo, current, nextMove, parallel, board = initializeAIBattleVariables()
 	return render_template('mancala.html', board=board.getBoard(), bowls=board.getBowls())
 
 @app.route('/makeNextMove')
 def makeNextMove():
+	global playerOne
+	global playerTwo
+	global current
+	global nextMove
 	makeAIBattleMove(playerOne, playerTwo, current, nextMove)
 	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls(), 'gameOver': board.game_over(),'winnerString': getWinnerIfGameIsOver()})
 
@@ -367,7 +376,7 @@ def getWinner():
 	if p1_score > p2_score:
 		winnerString = "Player One Wins!"
 	elif p1_score < p2_score:
-		winnerString = "Player TWO Wins!"
+		winnerString = "Player Two Wins!"
 	else:
 		winnerString = "It\'s a tie!"
 	return winnerString
