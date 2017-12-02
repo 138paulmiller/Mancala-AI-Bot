@@ -105,6 +105,10 @@ class Board:
 		return self.board
 
 
+class Human:
+	def __init__(self, player):
+		self.player = player
+
 class AI:
 	def __init__(self, player, lookahead, relative_score= False, horde=False, relative_horde=False):
 		self.player = player
@@ -296,75 +300,111 @@ def get_state_space(board, player, depth):
 def resetBoard():
 	return Board()
 
-def initializeAIBattleVariables():
-	P1 = 0
-	P2 = 1
-	# multiprocess computaion
-	parallel = True
-	lookahead = 8 # AI lookahead depth, set to negative to search entire game
-	# board = Board() commented out, moved it to global scope in hopes dynamic
-	ai = AI(P1, lookahead, relative_score= False)
-	#ai_horder = AI(P2, lookahead, horde=True) # hordes pieces on its side
-	ai_relative = AI(P2, lookahead, relative_score= True, horde=True, relative_horde=True) #horde relative is better then not
-	next = random.randint(0,1)
-	starting_ai = next
-	ai_cur = None # ai with current turn
-	newBoard = Board()
-	return ai, ai_relative, ai_cur, next, parallel, newBoard
+def updateCurrentPlayer():
+	global nextMove
+	global board
+	if not board.has_move(nextMove):
+		nextMove = (nextMove+1)%2
+	if nextMove == playerOne.player:
+		current = playerOne
+	else:
+		current = playerTwo
+	return current
 
-# this will be the driver code, still need to create smaller methods for gameplay, this is currently just a prototype
-# -----------------------------------------------------------------------------------------------------
+# do this while game is not over
+def makeAIBattleMove(current):
+	move = current.move(board, parallel)
+	print board
+	next = board.move(current.player, move)
+	return next
 
-playerOne, playerTwo, current, nextMove, parallel, board = initializeAIBattleVariables()
-# playerOne = None
-# playerTwo = None
-# current = None
-# nextMove = None
+def initiatePlayerMove(current_player, move):
+	next = board.move(current_player.player, move)
+	return next
 
-# while(isGameOver == False):
-	# makeAIBattleMove(playerOne, playerTwo, current, nextMove)
+@app.route('/launchAIBattle', methods=['POST'])
+def launchAIBattle():
+	return render_template('mancala.html', game_type="AI vs AI")
 
-# getWinner()
+@app.route('/launchPlayerVersusAI', methods=['POST'])
+def launchPlayerVersusAI():
+	return render_template('mancala.html', game_type="Player vs AI")
 
-# -----------------------------------------------------------------------------------------------------
-# rest of the driver code is located at the end of this file
-
-@app.route('/initializeAIBattle', methods=['POST'])
-def initializeAIBattle():
+@app.route('/initializeVersusAIVariables')
+def initializeVersusAIVariables():
 	global playerOne
 	global playerTwo
 	global current
 	global nextMove
 	global parallel
 	global board
-	playerOne, playerTwo, current, nextMove, parallel, board = initializeAIBattleVariables()
-	return render_template('mancala.html', board=board.getBoard(), bowls=board.getBowls())
+	P1 = 0
+	P2 = 1
+	# multiprocess computaion
+	parallel = True
+	lookahead = 9 # AI lookahead depth, set to negative to search entire game
+	board = Board()
+	playerOne = Human(P1)
+	# ai Player
+	playerTwo = AI(P2, lookahead)
+	# starting player is random
+	# current = random.randint(0,1)  # todo this line is a fucking problem......
+	current = None
+	nextMove = random.randint(0,1)
+	return jsonify({'initialized' : True})
 
-@app.route('/makeNextMove')
-def makeNextMove():
+@app.route('/initializeAIBattleVariables')
+def initializeAIBattleVariables():
 	global playerOne
 	global playerTwo
 	global current
 	global nextMove
-	makeAIBattleMove(playerOne, playerTwo, current, nextMove)
+	global parallel
+	global board
+	P1 = 0
+	P2 = 1
+	# multiprocess computaion
+	parallel = True
+	lookahead = 8 # AI lookahead depth, set to negative to search entire game
+	# board = Board() commented out, moved it to global scope in hopes dynamic
+	playerOne = AI(P1, lookahead, relative_score= False)
+	#ai_horder = AI(P2, lookahead, horde=True) # hordes pieces on its side
+	playerTwo = AI(P2, lookahead, relative_score= True, horde=True, relative_horde=True) #horde relative is better then not
+	nextMove = random.randint(0,1)
+	starting_ai = nextMove
+	current = None # ai with current turn
+	board = Board()
+	return jsonify({'initialized' : True})
+
+@app.route('/makePlayerMove')
+def makePlayerMove():
+	global current
+	global nextMove
+	# todo remove below from this function, only ok for continuous AI loops
+	# current = getCurrentPlayer(playerOne, playerTwo, nextMove)
+	playerMove = request.args.get('playerMove', type=int)
+	print("testing player move")
+	print (request.args)
+	print(playerMove)
+	nextMove = initiatePlayerMove(current, playerMove)
+	print board
 	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls(), 'gameOver': board.game_over(),'winnerString': getWinnerIfGameIsOver()})
 
-# @app.route('/getWinnerString')
-# def getWinnerString():
-# 	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls(), 'winnerString': getWinner()})
+@app.route('/makeNextAIMove')
+def makeNextAIMove():
+	global current
+	global nextMove
+	# todo remove below from this function, only ok for continuous AI loops
+	# current = getCurrentPlayer(playerOne, playerTwo, nextMove)
+	nextMove = makeAIBattleMove(current)
+	return jsonify({'board' : board.getBoard(),'bowls': board.getBowls(), 'gameOver': board.game_over(),'winnerString': getWinnerIfGameIsOver()})
 
-# do this while game is not over
-def makeAIBattleMove(ai, ai_relative, ai_cur, next):
-	if not board.has_move(next):
-		next = (next+1)%2
-	if next == ai.player:
-		ai_cur = ai
-	else:
-		ai_cur = ai_relative
-	move = ai_cur.move(board, parallel)
-	print board
-	next = board.move(ai_cur.player, move)
-	return board.game_over()
+@app.route('/getCurrentPlayerNumber')
+def getCurrentPlayerNumber():
+
+	global current
+	current = updateCurrentPlayer()
+	return jsonify({'playerNumber' : current.player})
 
 def getWinner():
 	print ' 		FINAL'
@@ -385,83 +425,6 @@ def getWinnerIfGameIsOver():
 	if board.game_over() == True:
 		return getWinner()
 
-def main():
-	P1 = 0
-	P2 = 1
-	# multiprocess computaion
-	parallel = True
-	lookahead = 6 # AI lookahead depth, set to negative to search entire game
-	board = Board()
-	# ai Player
-	ai = AI(P2, lookahead)
-	# starting player is random
-	current_player = random.randint(0,1)
-	next = (current_player+1)%2
-	move = 0
-	while not board.game_over() and move != 'quit':
-		print board
-		print '\nP'+str(current_player+1) + '\'s Turn'
-		# if the current player has a move, else switch
-		if board.has_move(current_player):
-			# not ai turn, user turn
-			if current_player != ai.player:
-				move = ''
-				next = current_player
-				while current_player == next and board.has_move(current_player) and move != 'quit':
-					move = get_user_move(board, current_player)
-					if not board.check_move(current_player, move) :
-						print 'No pieces', move
-					if move != 'quit':
-						next = board.move(current_player, move)
-						print board
-						print 'Play again!'
-						print '\nP'+str(current_player+1)
-
-			else:
-				# AI turn
-				move = ai.move(board, parallel)
-				# get the move for the ai player
-				print '\tAI picked ', move+1
-				next = board.move(ai.player, move)
-				# while AI has another move
-				while ai.player == next and board.has_move(ai.player) and move != 'quit':
-					print board
-					print '\tAI Playing Again...'
-					move = ai.move(board, parallel)
-					print '\tAI picked ', move+1
-					next = board.move(ai.player, move)
-			# set player to the next
-			current_player = next
-		else:
-			print '\n P'+str(current_player+1) + ' has no moves!'
-			current_player = (current_player+1)%2
-
-	# If game is over and user did not quit
-	if move != 'quit':
-		print ' 		FINAL'
-		print board
-		p1_score = board.get_score(P1)
-		p2_score = board.get_score(P2)
-		if p1_score > p2_score:
-			print 'Player 1 Wins!'
-		elif p1_score < p2_score:
-			print 'Player 2 Wins!'
-		else:
-			print 'It\'s a tie !'
-	print 'Goodbye!'
-
 @app.route('/')
 def loadHomePage():
 	return render_template('homepage.html')
-
-# @app.route('/launchAIBattle', methods=['POST'])
-# def launchAIBattle():
-# 	board = [4,4,4,4,4,4,4,4,4,4,4,4]
-# 	bowl = [0,0]
-# 	return render_template('mancala.html', board=board, bowl=bowl)
-
-# if __name__ == '__main__':
-	#main()  # user interactive
-	# ai_battle() # watch AI's battle it out
-	#board = Board()
-	#print 'State Space Size: ', get_state_space(board, 0, 10)
