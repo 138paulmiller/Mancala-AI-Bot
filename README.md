@@ -44,7 +44,7 @@ The first player to start is randomly chosen. The player must choose one of the 
 The game ends when there are no more pebbless on the board. There is a popular variant where the game ends when one players side is empty, however, an we discovered an AI with a deep enough lookahead is capable of winning in one turn if it plays first. 
 
 # Algorithms
-Mancala is triavially a decision problem since each AI agent muct decide on what move to play.
+Mancala is triavially a decision problem since each AI agent must decide on what move to play.
 Each of our AI agents make use of varying algotithms for decision making.  
 We used:
 - Minimax with Alpha-Beta Pruning
