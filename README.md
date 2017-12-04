@@ -49,10 +49,10 @@ Each of our AI agents make use of varying algotithms for decision making.
 We used:
 - Minimax with Alpha-Beta Pruning
 - Monte-Carlo Tree Search
-- Genetic Algorithm with binary encoded moves
+- Evolutionary Algorithm with binary encoded moves
 
 
-The algortihms we used vary in the method of deciding. For example, our Minimax, Monte-Carlo and Genetic algorithms make use of traversing current game tree. However, both of the searching algorithms use different heuristics to limit the state space being search. The state space for an entire game is very large, and running an exhaustive search on the entire game tree will run in about O(6^n) time. Where n is number of total turns, where each player has at most 6 choices.
+The algortihms we used vary in the method of deciding. For example, our Minimax, Monte-Carlo and Evolutionary algorithms make use of traversing current game tree. However, both of the searching algorithms use different heuristics to limit the state space being search. The state space for an entire game is very large, and running an exhaustive search on the entire game tree will run in about O(6^n) time. Where n is number of total turns, where each player has at most 6 choices.
 A naive exhaustive searching algorithm for this is completely inefficient, so adding a maximum lookahead depth allows us to bound the search space for our algorithms making them run in a reasonable enough time to play against. 
 
 ### Heuristics 
@@ -64,5 +64,13 @@ This heuristic can be used to:
 - Maximize the difference bewteen the number of pebbles on AI side from players side
 - Or a weighted polynomial of the above (x = score, p = pebble diff = x+p*0.3)
 
+Modifying the evaluation heuritistic also changes the difficulty of the AI. For instance, in the Minimax algorithm, evaluating the score performs much better than evaluating number of pebbles on each side. Also, measuring the relative score between the player and the AI performs better than just maximizing the AI. The reasoning behind this would be that the AI not only maximizes his own scrore, but also makes sure that the next best move for the player will be far lower than the AI's score. So it would preference 9 vs 3 over 10 vs 8.
+
 ### Playability 
-Each of our algorithms performs differently. The Minimax algorithm with Alpha-Beta pruning is a more exhaustive searching making it much slower but also much more difficult to win. With a turn lookahead depth of around 6-8, the AI is quick enough to play and very difficult to beat. However, if the lookahead is not set and the AI searches the entire game tree, the AI will be unbeatable, however due to the time complexity of the game tree the AI takes far too long to decide on a move even with alpha-beta pruning. So, both Monte-Carlo and Genetic Algorithm decision making approaches are much more user-friendly. The Monte-Carlo algorithm makes uses of a probabilistic adversarial decision making which chooses the other players mosty likely move. This allows the algorithm to be far less exhaustive making it capable of making more human-like decisions, since the enemy may not always choose the predicted move. 
+Each of our algorithms performs differently. 
+The Minimax algorithm with Alpha-Beta pruning is a more exhaustive searching making it much slower but also much more difficult to win. With a turn lookahead depth of around 6-8, the AI is quick enough to play and very difficult to beat. However, if the lookahead is not set and the AI searches the entire game tree, the AI will be unbeatable, however due to the time complexity of the game tree the AI takes far too long to decide on a move even with alpha-beta pruning. So, both Monte-Carlo and Evolutionary Algorithm decision making approaches are much more user-friendly. 
+The Monte-Carlo algorithm makes uses of a probabilistic adversarial decision making which chooses the other players mosty likely move. This allows the algorithm to be far less exhaustive making it capable of making more human-like decisions, since the enemy may not always choose the predicted move. 
+The Evolutionary algorithm makes use of binary programs that encode possible moves for the AI. The programs are initially randomly and evolved using probabilistic mutation and crossover. Each population is evaluated by testing the heuristic for each next potential move, and the programs with the highest score move are chosen by the probability of their score.  
+
+### Conclusion
+This was a very interesting project. Since the game tree is simple enough to visualize, yet results in an exponential explosion of possible game states. Each AI plays the game differently.
