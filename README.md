@@ -104,5 +104,3 @@ This class provides the following features to get the current game state:
   - Get the values of the bowls 
 - getBoard
   - Get the 1D array of slots
-
-#### 
