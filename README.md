@@ -24,7 +24,9 @@ To launch this application make sure you are in a Python2.7 environment with Fla
   pip2 install flask
 
 # Running
+There are two options to interact with the AI agents. The user can either play against the AI using the command terminal or use our webpage. Notice that Flask is only neccessary to have if you plan to use the webpage. 
 
+### Webpage
 Navigate to the Mancala-AI-Bot folder in your terminal and run command: 
 
   FLASK_APP=mancala_flask.py flask run
@@ -74,3 +76,33 @@ The Evolutionary algorithm makes use of binary programs that encode possible mov
 
 ### Conclusion
 This was a very interesting project. Since the game tree is simple enough to visualize, yet results in an exponential explosion of possible game states. Each AI plays the game differently.
+
+
+# Code
+### Class descriptions
+#### Board
+There is a Board class that provides both the AI and the player an interface to making moves and getting feedback on which player's turn is next. Mancala has two sides of 6 slots which is mapped onto a single integer array of length 12. Each move is modulates across the array, adding values to the current players bowl. Player one's bowl gets incremented if the player passes index 5 while, player two's bowl get incremented if they pass index 11. Each player is an integer value 0 or 1, and the choice of there move is offset by the player value multiplied by 6. This simulates the mapping of 2X6 array into a single 12X1 array where each player value (0, 1) represents the current row of slots. This made it much easier to simply iterate the index when dropping pebbles into the slots.
+2D to 1D mapping
+
+    A1[WIDTH*HEIGHT] == A2[WIDTH][HEIGHT]
+    A2[row][col] == A1[WIDTH*row+col]  
+    
+This class provides the following features to get the current game state:
+-	move
+  - Accepts a player and the given move and takes the pebbles from the slot and distributes them across the board. If dropped into a slot on the players side, it will pick up those pebbles and continue the turn. This function returns the id to the next player, since the player may get to play again
+- check_move
+  - Takes a player id and the slot to make the move and checks if the slot has any pebbles
+- has_move 
+  - Takes a player id and if the player has any pebbles of his side, will return true. Otherwise false
+- game_over
+  - If all pieces are in the bowls, game over
+- get_score
+  - Returns the score from a given player id
+-	get_pieces
+  - Returns the number of pieces on a given player's side
+- getBowls
+  - Get the values of the bowls 
+- getBoard
+  - Get the 1D array of slots
+
+#### 
