@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Mancala</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='mancala.css')}}" />
+    <script src="../static/jquery-3.2.1.min.js"></script>
+</head>
+  <body>
+
+    <script>
+    var isGameOver = Boolean(false);
+    var winnerString = "no moves have been made";
+    var currentPlayerNumber = 1111; //arbitrary value
+
+    // depending on which cell is clicked, send index of move, [0,1,...,5]
+    function waitForPlayerInput(){
+
+      //todo convert this entire block of if elses to a loop
+      if(document.getElementById('cell0').innerHTML != 0){
+        document.getElementById('cell0').onclick = function() {
+            makePlayerMovePlayerVsAI(0);
+        };
+      }
+      else{
+        document.getElementById('cell0').onclick = function() {
+            alert('invalid move');
+        };
+      }
+
+      if(document.getElementById('cell1').innerHTML != 0){
+        document.getElementById('cell1').onclick = function() {
+            makePlayerMovePlayerVsAI(1);
+        };
+      }
+      else{
+        document.getElementById('cell1').onclick = function() {
+            alert('invalid move');
+        };
+      }
+
+      if(document.getElementById('cell2').innerHTML != 0){
+        document.getElementById('cell2').onclick = function() {
+            makePlayerMovePlayerVsAI(2);
+        };
+      }
+      else{
+        document.getElementById('cell2').onclick = function() {
+            alert('invalid move');
+        };
+      }
+
+      if(document.getElementById('cell3').innerHTML != 0){
+        document.getElementById('cell3').onclick = function() {
+            makePlayerMovePlayerVsAI(3);
+        };
+      }
+      else{
+        document.getElementById('cell3').onclick = function() {
+            alert('invalid move');
+        };
+      }
+
+      if(document.getElementById('cell4').innerHTML != 0){
+        document.getElementById('cell4').onclick = function() {
+            makePlayerMovePlayerVsAI(4);
+        };
+      }
+      else{
+        document.getElementById('cell4').onclick = function() {
+            alert('invalid move');
+        };
+      }
+
+      if(document.getElementById('cell5').innerHTML != 0){
+        document.getElementById('cell5').onclick = function() {
+            makePlayerMovePlayerVsAI(5);
+        };
+      }
+      else{
+        document.getElementById('cell5').onclick = function() {
+            alert('invalid move');
+        };
+      }
+
+      document.getElementById('playerTurnElement').innerHTML = "Please select your move.";
+    }
+
+    function setBoard(board, bowls){
+      document.getElementById('cell0').innerHTML = board[0];
+      document.getElementById('cell1').innerHTML = board[1];
+      document.getElementById('cell2').innerHTML = board[2];
+      document.getElementById('cell3').innerHTML = board[3];
+      document.getElementById('cell4').innerHTML = board[4];
+      document.getElementById('cell5').innerHTML = board[5];
+      document.getElementById('cell6').innerHTML = board[6];
+      document.getElementById('cell7').innerHTML = board[7];
+      document.getElementById('cell8').innerHTML = board[8];
+      document.getElementById('cell9').innerHTML = board[9];
+      document.getElementById('cell10').innerHTML = board[10];
+      document.getElementById('cell11').innerHTML = board[11];
+
+      document.getElementById('bowl0').innerHTML = bowls[0];
+      document.getElementById('bowl1').innerHTML = bowls[1];
+    }
+
+    function displayAIBattleWinnerAndRestartButton(){
+      displayWinner();
+      displayRestartAIBattleButton();
+      document.getElementById('playerTurnElement').innerHTML = "";
+    }
+
+    function displayPlayerVsAIWinnerAndRestartButton(){
+      displayWinner();
+      displayRestartPlayerVsAIButton();
+      document.getElementById('playerTurnElement').innerHTML = "";
+    }
+
+    function displayWinner(){
+      document.getElementById('winnerDisplay').innerHTML = winnerString;
+    }
+
+    function displayRestartAIBattleButton(){
+      document.getElementById('restartBattleDiv').innerHTML = "<div><form action=\"{{ url_for('launchAIBattle') }}\" method=\"POST\"><input type=\"submit\" class=\"btn btn-primary\" name=\"launchAIBattleButton\" value=\"Restart AI Battle\"></form></div>";
+    }
+
+    function displayRestartPlayerVsAIButton(){
+	
+	if('{{ ai_agent }}' == "Minimax"){
+      document.getElementById('restartBattleDiv').innerHTML = "<div><form action=\"{{ url_for('launchPlayerVersusMinimax') }}\" method=\"POST\"><input type=\"submit\" class=\"btn btn-primary\" name=\"restartVersusAi\" value=\"Play Again\"></form></div>";
+    }
+	else if('{{ ai_agent }}' == "Genesis"){
+      document.getElementById('restartBattleDiv').innerHTML = "<div><form action=\"{{ url_for('launchPlayerVersusGenesis') }}\" method=\"POST\"><input type=\"submit\" class=\"btn btn-primary\" name=\"restartVersusAi\" value=\"Play Again\"></form></div>";
+
+		}
+	else if('{{ ai_agent }}' == "MonteCarlo"){
+      document.getElementById('restartBattleDiv').innerHTML = "<div><form action=\"{{ url_for('launchPlayerVersusMonteCarlo') }}\" method=\"POST\"><input type=\"submit\" class=\"btn btn-primary\" name=\"restartVersusAi\" value=\"Play Again\"></form></div>";
+
+		}
+	}
+	
+	
+
+    function updateAndDisplayCurrentPlayerNumberThenMakeAIBattleMove(){
+      $.get(
+        "{{ url_for('getCurrentPlayerNumber') }}",
+        function(data) {
+          currentPlayerNumber = data.playerNumber;
+          document.getElementById('playerNum').innerHTML = currentPlayerNumber;
+          success:makeAIMoveAIBattle();
+        });
+    }
+
+    function updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove(){
+      $.get(
+        "{{ url_for('getCurrentPlayerNumber') }}",
+        function(data) {
+          currentPlayerNumber = data.playerNumber;
+          document.getElementById('playerNum').innerHTML = currentPlayerNumber;
+          if(currentPlayerNumber == 0){
+            success:waitForPlayerInput();
+          }
+          else {
+
+            success:makeAIMovePlayerVsAI();
+          }
+        });
+    }
+
+    function initializeVersusAIVariables(){
+      $.get(
+        "{{ url_for('initializeVersusAIVariables') }}",
+        function(data) {
+            success:updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove();
+        });
+    }
+
+    function initializeAIBattleVariables(){
+      $.get(
+        "{{ url_for('initializeAIBattleVariables') }}",
+        function(data) {
+          success:updateAndDisplayCurrentPlayerNumberThenMakeAIBattleMove();
+        });
+    }
+
+    function clearPlayerButtonOnClicks(){
+      document.getElementById('cell0').onclick = null;
+      document.getElementById('cell1').onclick = null;
+      document.getElementById('cell2').onclick = null;
+      document.getElementById('cell3').onclick = null;
+      document.getElementById('cell4').onclick = null;
+      document.getElementById('cell5').onclick = null;
+    }
+
+    function makePlayerMovePlayerVsAI(playerMove){
+
+      clearPlayerButtonOnClicks();
+
+      //this switch state is not the best practice, temporarily using it for prototyping purposes
+      switch(playerMove){
+        case 0:
+        $.get(
+          "{{ url_for('makePlayerMove', playerMove=0)}}",
+          function(data) {
+            setBoard(data.board, data.bowls);
+            isGameOver = Boolean(data.gameOver);
+            winnerString = data.winnerString;
+            if(isGameOver){
+              success:displayPlayerVsAIWinnerAndRestartButton();
+            }
+            else{
+            success:updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove();
+            }
+          });
+          break
+
+        case 1:
+        $.get(
+          "{{ url_for('makePlayerMove', playerMove=1)}}",
+          function(data) {
+            setBoard(data.board, data.bowls);
+            isGameOver = Boolean(data.gameOver);
+            winnerString = data.winnerString;
+            if(isGameOver){
+              success:displayPlayerVsAIWinnerAndRestartButton();
+            }
+            else{
+            success:updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove();
+            }
+          });
+          break;
+
+        case 2:
+        $.get(
+          "{{ url_for('makePlayerMove', playerMove=2)}}",
+          function(data) {
+            setBoard(data.board, data.bowls);
+            isGameOver = Boolean(data.gameOver);
+            winnerString = data.winnerString;
+            if(isGameOver){
+              success:displayPlayerVsAIWinnerAndRestartButton();
+            }
+            else{
+            success:updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove();
+            }
+          });
+          break;
+
+        case 3:
+        $.get(
+          "{{ url_for('makePlayerMove', playerMove=3)}}",
+          function(data) {
+            setBoard(data.board, data.bowls);
+            isGameOver = Boolean(data.gameOver);
+            winnerString = data.winnerString;
+            if(isGameOver){
+              success:displayPlayerVsAIWinnerAndRestartButton();
+            }
+            else{
+            success:updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove();
+            }
+          });
+          break;
+
+        case 4:
+        $.get(
+          "{{ url_for('makePlayerMove', playerMove=4)}}",
+          function(data) {
+            setBoard(data.board, data.bowls);
+            isGameOver = Boolean(data.gameOver);
+            winnerString = data.winnerString;
+            if(isGameOver){
+              success:displayPlayerVsAIWinnerAndRestartButton();
+            }
+            else{
+            success:updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove();
+            }
+          });
+          break;
+
+        case 5:
+        $.get(
+          "{{ url_for('makePlayerMove', playerMove=5)}}",
+          function(data) {
+            setBoard(data.board, data.bowls);
+            isGameOver = Boolean(data.gameOver);
+            winnerString = data.winnerString;
+            if(isGameOver){
+              success:displayPlayerVsAIWinnerAndRestartButton();
+            }
+            else{
+            success:updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove();
+            }
+          });
+          break;
+      }
+    }
+
+    function makeAIMovePlayerVsAI(){
+      document.getElementById('playerTurnElement').innerHTML = "AI's turn.";
+      $.get(
+        "{{ url_for('makeNextAIMove') }}",
+        function(data) {
+          setBoard(data.board, data.bowls);
+          isGameOver = Boolean(data.gameOver);
+          winnerString = data.winnerString;
+          if(isGameOver){
+            success:displayPlayerVsAIWinnerAndRestartButton();
+          }
+          else{
+            success:updateAndDisplayCurrentPlayerNumberThenMakePlayerVsAIMove();
+          }
+        });
+    }
+
+    function makeAIMoveAIBattle(){
+      $.get(
+        "{{ url_for('makeNextAIMove') }}",
+        function(data) {
+          setBoard(data.board, data.bowls);
+          isGameOver = Boolean(data.gameOver);
+          winnerString = data.winnerString;
+          if(isGameOver){
+            success:displayAIBattleWinnerAndRestartButton();
+          }
+          else{
+            success:updateAndDisplayCurrentPlayerNumberThenMakeAIBattleMove();
+          }
+        });
+      }
+
+      //this function runs when page is loaded
+       $(document).ready(function() {
+
+         if('{{ game_type }}' == "AI vs AI"){
+           initializeAIBattleVariables();
+          }
+         else if('{{ game_type }}' == "Player vs AI"){
+			
+           initializeVersusAIVariables();
+         }
+        });
+
+     </script>
+
+    <div class="container">
+
+    <h1>Mancala</h1>
+    <h4>{{ game_type }}</h4>
+    <h4 id="playerNum"></h4>
+    <body>
+
+      <table>
+        <tr>
+          <tr>
+            <td rowspan="2" id="bowl1">0</td>
+            <td id="cell11">4</td>
+            <td id="cell10">4</td>
+            <td id="cell9">4</td>
+            <td id="cell8">4</td>
+            <td id="cell7">4</td>
+            <td id="cell6">4</td>
+            <td rowspan="2" id="bowl0">0</td>
+          </tr>
+        </tr>
+
+        <tr>
+          <td class='playerButton' id="cell0">4</td>
+          <td class='playerButton' id="cell1">4</td>
+          <td class='playerButton' id="cell2">4</td>
+          <td class='playerButton' id="cell3">4</td>
+          <td class='playerButton' id="cell4">4</td>
+          <td class='playerButton' id="cell5">4</td>
+        </tr>
+
+      </table>
+
+    </body>
+    <h1 id="playerTurnElement"></h1>
+
+    <h1 id="winnerDisplay"></h1>
+    <div id="restartBattleDiv"></div>
+
+  </body>
+</html>

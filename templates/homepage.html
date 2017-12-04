@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Mancala</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  </head>
+  <body>
+
+    <div class="container">
+
+    <h1>Mancala</h1>
+
+    <!-- button to launch AI Battle -->
+    <div>
+      <form action="{{ url_for('launchAIBattle') }}" method="POST">
+        <input type="submit" class="btn btn-primary" name="launchAIBattleButton" value="Watch AI vs AI">
+      </form>
+    </div>
+
+    <!-- button to launch Versus AI -->
+    <div>
+      <form action="{{ url_for('launchPlayerVersusGenesis') }}" method="POST">
+        <input type="submit" class="btn btn-primary" name="launchVersusGenesis" value="Play Against Genesis">
+      </form>
+    </div>
+ 	
+	<div>
+      <form action="{{ url_for('launchPlayerVersusMonteCarlo') }}" method="POST">
+        <input type="submit" class="btn btn-primary" name="launchVersusMonteCarlo" value="Play Against Monte Carlo">
+      </form>
+    </div>
+
+    <!-- button to launch Versus AI -->
+    <div>
+      <form action="{{ url_for('launchPlayerVersusMinimax') }}" method="POST">
+        <input type="submit" class="btn btn-primary" name="launchVersusMinimax" value="Play Against Minimax">
+      </form>
+    </div>
+
+  </body>
+</html>

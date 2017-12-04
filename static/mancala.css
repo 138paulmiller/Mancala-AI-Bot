@@ -1,0 +1,10 @@
+table td{
+  border: 15px solid #c18751;
+  width: 100px;
+  height: 100px;
+  padding: 5px;
+  text-align: center;
+  font-size: 30px;
+  font-weight: bold;
+  background-color: #f4c497;
+}
