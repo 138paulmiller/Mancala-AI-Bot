@@ -40,7 +40,7 @@ There are many variations of rules for Mancala since it is one of the oldest gam
 There are 12 slots and 2 bowls on each board. This is a 2-player game meaning that each player has 6 slots and 1 bowl. The six slots facing the player, and the bowl to their right. There are 48 pebbles the entire game. Initially, 4 pebbles are dropped into each of the 12 slots. 
 
 ### Playing
-The first player to start is randomly chosen. The player must choose one of the 6 slots on their side that has pebbles. To move, the player picks up all the pebbless in that slot and moves right one slot for each pebble. For each slot visited, the player drops one pebbles and stops until there are no pebbless. When the player visits the bowl on their side, tje plauer drops one pebbles into it. There are three cases of what to do depending on where tje last pebble is dropped. If the player drops his last pebbles into an enpty slot, or a slot on the other player's side their turn is over. If the player drops his last pebbles onto a nonempty slot on their side, tje player must pick up all the pebbless in that slot and continue the move. And, lastly  the player drops his last pebbles into his bowl, the player can select a new slot play if available. 
+The first player to start is randomly chosen. The player must choose one of the 6 slots on their side that has pebbles. To move, the player picks up all the pebbless in that slot and moves right one slot for each pebble. For each slot visited, the player drops one pebbles and stops until there are no pebbless. When the player visits the bowl on their side, tje plauer drops one pebbles into it. There are three cases of what to do depending on where the last pebble is dropped. If the player drops his last pebbles into an enpty slot, or a slot on the other player's side their turn is over. If the player drops his last pebbles onto a nonempty slot on their side, tje player must pick up all the pebbless in that slot and continue the move. And, lastly  the player drops his last pebbles into his bowl, the player can select a new slot play if available. 
 The game ends when there are no more pebbless on the board. There is a popular variant where the game ends when one players side is empty, however, an we discovered an AI with a deep enough lookahead is capable of winning in one turn if it plays first. 
 
 # Algorithms
@@ -50,8 +50,11 @@ We used:
 - Minimax with Alpha-Beta Pruning
 - Monte-Carlo Tree Search
 - Genetic Algorithm with binary encoded moves
+
+
 The algortihms we used vary in the method of deciding. For example, our Minimax, Monte-Carlo and Genetic algorithms make use of traversing current game tree. However, both of the searching algorithms use different heuristics to limit the state space being search. The state space for an entire game is very large, and running an exhaustive search on the entire game tree will run in about O(6^n) time. Where n is number of total turns, where each player has at most 6 choices.
 A naive exhaustive searching algorithm for this is completely inefficient, so adding a maximum lookahead depth allows us to bound the search space for our algorithms making them run in a reasonable enough time to play against. 
+
 ### Heuristics 
 All our algorithms make use of a variable heuristic function. This function analyzes the current state of the board to help the AI make the best possible decision. 
 This heuristic can be used to:
