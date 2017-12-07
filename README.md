@@ -32,7 +32,7 @@ For more information about Flask you can visit: http://flask.pocoo.org
 
 # Mancala Rules
 
-There are many variations of rules for Mancala since it is a very old game. The particular rules we used allows for each AI to calculate a path to victory fairly. By fairly, we mean that some variations of this game are not perfect and allow for an extremely calculate first move that is capable of ending the game. [Here is an example of a MatLab script that will win in one turn if played  first](https://blogs.mathworks.com/loren/2017/05/22/how-to-win-all-marbles-in-mancala-on-your-first-move-with-matlab/#a7d8ead7-8e1a-499d-b104-2a7d385db486). So, the set of rules we chose allow for a fun experience against the AI.
+There are many variations of rules for Mancala since it is a very old game. The particular rules we used allows for each AI to calculate a path to victory fairly. By fairly, we mean that some variations of this game are not perfect and allow for an extremely calculated first move that is capable of ending the game. [Here is an example of a MatLab script that will win in one turn if played  first](https://blogs.mathworks.com/loren/2017/05/22/how-to-win-all-marbles-in-mancala-on-your-first-move-with-matlab/#a7d8ead7-8e1a-499d-b104-2a7d385db486). So, the set of rules we chose allow for a fun experience against the AI.
 
 ### Setup
 There are 12 slots and 2 bowls on each board. This is a 2-player game where each player has six slots and one bowl. The six slots closest to each player is theirs and each player's bowl is on the right. There are 48 pebbles total, and to start four pebbles are dropped into each of the twelve slots.
@@ -112,11 +112,13 @@ All AI agents must contain a function named move that takes in the current board
 
 # Minimax
 
+The Minimax algorithm is computationally expensive. So, to shorten the time it takes for the AI to make a decision a maximum search depth is set. However, the algorithm still performs an exhaustive search on the game tree, so Alpha-Beta pruning was employed. To further speed up the AI's thought process, the Minimax AI mkes use of multithreading by initiall spawning 1 thread for each of tbe 6 possible choices. Each thread performs a Minimax search and returns the predictive score for the move, then the threads are joined and the thread yielding the largest score is chosen.
+
+##### Interface
+
 - eval_heuristic(board)
 - alphabeta( board, alpha, beta, player, depth)
-
 - get_move_score( move)
-
 - move_parallel( board)
 - move_serial( board)
 - move(board, parallel=True)
